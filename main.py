@@ -1,6 +1,13 @@
-import argparse
-import subprocess
 import sys
+import os
+
+import subprocess
+
+
+welcome_text = 'To check an elf or .so file for sanitizers, ' \
+               'enter the absolute path to the required file.' \
+               ' Enter "exit" if you want to stop checking files.'
+request_path_text = 'Specify the path to the required ELF file or enter "exit": '
 
 
 def check_sanitizers_in_elf_file(file_path: str) -> dict[str, bool]:
@@ -9,8 +16,8 @@ def check_sanitizers_in_elf_file(file_path: str) -> dict[str, bool]:
     AddressSanitizer, ThreadSanitizer, MemorySanitizer.
 
     :param file_path: path to the ELF file
-    :return: dictionary with name of sanitizer as key and bool value
-             of its presence
+    :return: dictionary with name of sanitizer as key and
+             bool value of its presence
     """
     try:
         output = subprocess.check_output(
@@ -33,9 +40,34 @@ def check_sanitizers_in_elf_file(file_path: str) -> dict[str, bool]:
     }
 
 
+def pretty_print_for_sanitizers(sanitizers_dict: dict[str, bool]) -> None:
+    """
+    Print the result of checking for sanitizers in a pretty way.
+
+    :param sanitizers_dict: dictionary with name of sanitizer as key and
+           bool value of its presence
+    """
+    for sanitizer_name, is_present in sanitizers_dict.items():
+        print(f'Sanitizer {sanitizer_name}: '
+              f'{is_present and "set" or "not set"} up for this file.')
+
+    print()
+
+
 def main():
-    file_path = input('Specify the path to the required ELF file: ')
-    print(check_sanitizers_in_elf_file(file_path))
+    print(welcome_text)
+
+    exit_or_file_path_command = input(request_path_text)
+
+    while exit_or_file_path_command.lower() != 'exit':
+        if os.path.exists(exit_or_file_path_command) and os.path.isfile(exit_or_file_path_command):
+
+            pretty_print_for_sanitizers(
+                check_sanitizers_in_elf_file(exit_or_file_path_command)
+            )
+        else:
+            print('Path to file is incorrect. Try again.')
+        exit_or_file_path_command = input(request_path_text)
 
 
 if __name__ == '__main__':
